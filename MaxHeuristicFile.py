@@ -12,7 +12,7 @@ class MaxHeuristic(Heuristic):
     def get_state_with_applied_action(self, state, action):
         return pddl.state.apply(state, action.add_effects, action.del_effects)
     
-    def h(self, actions, initial_state, positive_goals, negative_goals):
+    def h(self, actions, initial_state, positive_goals, negative_goals, debug=False):
         if (self.are_goals_satisfied(initial_state, positive_goals, negative_goals)):
             return 0
         past_states = [initial_state]
@@ -22,11 +22,18 @@ class MaxHeuristic(Heuristic):
 
         stateId = 0
         limit = 1000
+        if (debug):
+            print("Started with "+str(len(actions))+" possible actions")
         while (stateId < len(past_states)):
             if (limit <= 0):
+                print("Heuristic bail!")
                 break
             state = past_states[stateId]
             cost = 1+path_costs[stateId]
+            if (debug):
+                print("Started at state["+str(stateId)+"]: ")
+                for part in state:
+                    print("\t",part)
             for action in actions:
                 if (not self.can_apply_action_to_state(state, action)):
                     continue
@@ -41,7 +48,11 @@ class MaxHeuristic(Heuristic):
                 path_costs.append(cost)
             stateId += 1
         if (len(paths_heuristics) > 0):
+            if (debug):
+                print("Our return options are: ", str(paths_heuristics));
             return max(paths_heuristics)
+        if (debug):
+            print("No path found. Returning inf");
         return float("inf")
 
 
@@ -73,7 +84,7 @@ if __name__ == '__main__':
 
     def test_heuristic(domain, problem, h, expected):
         parser, actions = parse_domain_problem(domain, problem)
-        v = h.h(actions, parser.state, parser.positive_goals, parser.negative_goals)
+        v = h.h(actions, parser.state, parser.positive_goals, parser.negative_goals, True)
         if (v == expected):
             print(" -> Success: "+str(v)+" == "+str(expected)+" at domain \""+str(domain)+"\"")
         else:
@@ -81,4 +92,3 @@ if __name__ == '__main__':
 
     h = MaxHeuristic()
     test_heuristic(tsp, pb1_tsp, h, 2)
-    #test_heuristic(dinner, pb1_dinner, h, 1)
