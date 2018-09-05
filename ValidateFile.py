@@ -31,18 +31,6 @@ class Validator:
         return (pddl.state.applicable(initial_state, positive_goals, negative_goals))
 
     def can_apply_action_to_state(self, state, action):
-        if (action is None):
-            print("No action in apply action to state");
-            return False;
-        if (state is None):
-            print("No state in apply action to state");
-            return False;
-        if (action.positive_preconditions is None):
-            print("No action.positive_preconditions in apply action to state");
-            return False;
-        if (action.negative_preconditions is None):
-            print("No action.negative_preconditions in apply action to state");
-            return False;
         return pddl.state.applicable(state, action.positive_preconditions, action.negative_preconditions)
 
     def get_state_with_applied_action(self, state, action):
@@ -55,6 +43,9 @@ class Validator:
     # positive_goals -> positive predicates of the goal
     # negative_goals -> negative predicates of the goal
     # plan -> plan parsed from a plan trace
+    # 
+    # Returns:
+    # True when following the plan implies on finishing at a state that satisfy the goals
     # =====================================
     def validate(self, actions, initial_state, positive_goals, negative_goals, plan):
         state = initial_state
@@ -62,4 +53,16 @@ class Validator:
             if (not self.can_apply_action_to_state(state, action)):
                 return False
             state = self.get_state_with_applied_action(state, action)
+        # The plan only works if you finish the goal at the last step!
         return self.are_goals_satisfied(state, positive_goals, negative_goals)
+
+if __name__ == '__main__':
+    dwr = "examples/dwr/dwr.pddl"
+    pb1 = "examples/dwr/pb1.pddl"
+    plan1 = "examples/dwr/dwr_pb1_bfs.plan"
+    plan2 = "examples/dwr/dwr_pb1_heuristic.plan"
+    plan_empty = "examples/dwr/empty.plan"
+    val = Validator()
+    print("Expected True, got:", str(val.validate_file(dwr, pb1, plan1)))
+    print("Expected True, got:", str(val.validate_file(dwr, pb1, plan2)))
+    print("Expected False, got:", str(val.validate_file(dwr, pb1, plan_empty)))
