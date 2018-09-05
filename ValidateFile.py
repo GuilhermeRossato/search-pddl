@@ -36,6 +36,21 @@ class Validator:
     def get_state_with_applied_action(self, state, action):
         return pddl.state.apply(state, action.add_effects, action.del_effects)
 
+    def fix_incomplete_plan(self, plan, actions):
+        """
+        Once upon a time someone instanced a class without it's constructor parameters.
+        Little did he know that optional parameters are for parameters that are optional.
+        This method tries to solve this inconsistency.
+        """
+        correct_plan = []
+        for frankenstein in plan: # It stops being an "Action" when it becomes an incomplete object
+            for action in actions:
+                # Is the action it should be in the first place?
+                if (action.name == frankenstein.name and action.parameters == frankenstein.parameters):
+                    correct_plan.append(action)
+                    continue
+        return correct_plan
+
     # =====================================
     # Params:
     # actions -> list of ground actions
@@ -48,8 +63,9 @@ class Validator:
     # True when following the plan implies on finishing at a state that satisfy the goals
     # =====================================
     def validate(self, actions, initial_state, positive_goals, negative_goals, plan):
+        correct_plan = self.fix_incomplete_plan(plan, actions);
         state = initial_state
-        for action in plan:
+        for action in correct_plan:
             if (not self.can_apply_action_to_state(state, action)):
                 return False
             state = self.get_state_with_applied_action(state, action)
