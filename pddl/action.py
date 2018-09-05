@@ -14,12 +14,19 @@ class Action:
         self.del_effects = del_effects
 
     def __str__(self):
-        return 'action: ' + self.name + \
-        '\n  parameters: ' + str(self.parameters) + \
-        '\n  positive_preconditions: ' + str(list(self.positive_preconditions)) + \
-        '\n  negative_preconditions: ' + str(list(self.negative_preconditions)) + \
-        '\n  add_effects: ' + str(list(self.add_effects)) + \
-        '\n  del_effects: ' + str(list(self.del_effects)) + '\n'
+        s = 'action: ' + self.name
+        if (self.parameters):
+            s += '\n  parameters: ' + str(self.parameters)
+        if (self.positive_preconditions):
+            s += '\n  positive_preconditions: ' + str(list(self.positive_preconditions))
+        if (self.negative_preconditions):
+            s += '\n  negative_preconditions: ' + str(list(self.negative_preconditions))
+        if (self.add_effects):
+            s += '\n  add_effects: ' + str(list(self.add_effects))
+        if (self.del_effects):
+            s += '\n  del_effects: ' + str(list(self.del_effects))
+        s += '\n'
+        return s
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
