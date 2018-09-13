@@ -11,66 +11,57 @@ class MaxHeuristic(Heuristic):
 
     def get_state_with_applied_action(self, state, action):
         return pddl.state.apply(state, action.add_effects, action.del_effects)
-    
+
     def h(self, actions, initial_state, positive_goals, negative_goals, debug=False):
+
         if (self.are_goals_satisfied(initial_state, positive_goals, negative_goals)):
             return 0
-        # List of all past states so we never cross the same state twice
-        past_states = [initial_state]
-        # List of where each past state came from, so we can backtrace if needed
-        # Spoiler alert: we won't
-        backtraces = [None]
-        # A list to hold the cost of each path we find, so we can find which is closer
-        path_costs = [0]
-        # A list to keep track of all successfull path costs
-        paths_heuristics = [];
+        # To help you understand this function, it creates a planning graph like
+        # the Graphplan's way of solving plans, adding to our list of states
+        # until we see the possibility of solving the goals, in which case we
+        # just return the level of the solution.
+        
+        # First let's create a Graphplan's "possible literals in state" list
+        all_state_predicates = set(initial_state)
+        steps_taken = 0 # levels of the relaxed version of the planning problem
 
-        # I prefer a non-recursive approach because... because it's better.
-        stateId = 0
-        limit = 1000
-        if (debug):
-            print("Started with "+str(len(actions))+" possible actions")
-        while (stateId < len(past_states)):
-            #if ((stateId % 1000) == 0):
-            #   print("We are at state id", stateId)
-            limit -= 1 # Throtle so that we don't run forever somehow
-            if (limit <= 0):
-                print("Heuristic bail!")
-                break
-            state = past_states[stateId]
-            cost = 1+path_costs[stateId]
-            if (debug):
-                print("Started at state["+str(stateId)+"]: ")
-                for part in state:
-                    print("\t",part)
+        # There's a catch in negative goals when we solve by the Graphplan method.
+        # 
+        # Here's an example: the "not garbage" predicate cannot be added to our
+        # state because its representation is NOT EXISTING in our state, the
+        # implementation forces us to REMOVE garbage from our "all predicates
+        # list" which would invariably make it the _not_ "all predicate list".
+        # Thats a very loose proof by contradition but the idea is what matters.
+        # I solved that by having negative goals be removed from the mutable
+        # set below as we do actions that remove the negative goals.
+        negative_goals = set(negative_goals)
+        
+        # Let's attempt to add all possible results into this
+        # all_state_predicates until we solve the goals
+
+        while (steps_taken < 1000): # Bail if we tried over 999 combinations of actions
+            if (self.are_goals_satisfied(all_state_predicates, positive_goals, negative_goals)):
+                return steps_taken # Returns the level of the graph plan
+            steps_taken += 1
+            # Let's create a new state with all possible state parts we can do from our current state parts
+            next_state_predicates = set(all_state_predicates)
             for action in actions:
                 # Skip action if it cannot be executed at this state
-                if (not self.can_apply_action_to_state(state, action)):
-                    #print("Cannot apply that action")
+                if (not action.positive_preconditions.issubset(all_state_predicates)):
                     continue
-                # Create new state with that action
-                new_state = self.get_state_with_applied_action(state, action)
-                # Check if we reached the destination
-                if (self.are_goals_satisfied(new_state, positive_goals, negative_goals)):
-                    # Record that cost, so we can compare with others
-                    paths_heuristics.append(cost)
-                    # We don't need to keep doing anything, so let's just skip
-                    continue
-                # Skip new state if it has already been visited
-                if (new_state in past_states):
-                    continue
-                # Add this new node to our lists
-                past_states.append(new_state)
-                backtraces.append(stateId)
-                path_costs.append(cost)
-            stateId += 1
-        # Return the greatest path cost we have (max)
-        if (len(paths_heuristics) > 0):
-            if (debug):
-                print("Our return options are: ", str(paths_heuristics));
-            return max(paths_heuristics)
-        if (debug):
-            print("No path found. Returning inf");
+
+                # Step in which we add all new effects to the predicate list if it did not exist
+                for predicate in action.add_effects:
+                    next_state_predicates.add(predicate)
+                # The reason we do not add directly to our all_state_predicates is because that would add a race condition to our action skipping algorithm
+
+                for predicate in action.del_effects:
+                    # Since negative goals are fundamentally different than the positive ones, we have to remove the negative goals until they are either empty or satisfy the initial state
+                    negative_goals.discard(predicate)
+
+            # Replace our old set of state parts with the new
+            del all_state_predicates # That's optional because maybe this helps garbage collection.
+            all_state_predicates = next_state_predicates
         return float("inf")
 
 
