@@ -43,12 +43,14 @@ class Validator:
         This method tries to solve this inconsistency.
         """
         correct_plan = []
-        for frankenstein in plan: # It stops being an "Action" when it becomes an incomplete object
+        for frankenstein in plan: # You cannot call it an action instance if it's an incomplete object
             for action in actions:
-                # Is the action it should be in the first place?
+                # Did we find the action it should be with the same parameters?
                 if (action.name == frankenstein.name and action.parameters == frankenstein.parameters):
+                    # Replace it with an action with conditions and effects populated
                     correct_plan.append(action)
-                    continue
+                    # Skip other actions since we already found the unique match
+                    break
         return correct_plan
 
     # =====================================
@@ -67,9 +69,10 @@ class Validator:
         state = initial_state
         for action in correct_plan:
             if (not self.can_apply_action_to_state(state, action)):
+                # If an action is not applicable we cannot follow that plan and it necessarily fails
                 return False
             state = self.get_state_with_applied_action(state, action)
-        # The plan only works if you finish the goal at the last step!
+        # The plan only works if you finish the goal at the last step, so we check that
         return self.are_goals_satisfied(state, positive_goals, negative_goals)
 
 if __name__ == '__main__':
