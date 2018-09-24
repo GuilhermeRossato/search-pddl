@@ -16,30 +16,20 @@ class MaxHeuristic(Heuristic):
 
         if (self.are_goals_satisfied(initial_state, positive_goals, negative_goals)):
             return 0
-        # To help you understand this function, it creates a planning graph like
-        # the Graphplan's way of solving plans, adding to our list of states
-        # until we see the possibility of solving the goals, in which case we
-        # just return the level of the solution.
+        # This function creates a planning graph like the Graphplan's algorithm,
+        # adding to our list of states until we see the possibility of solving all goals,
+        # where we just return the depth-level of the solution.
         
         # First let's create a Graphplan's "possible literals in state" list
         all_state_predicates = set(initial_state)
         steps_taken = 0 # levels of the relaxed version of the planning problem
 
-        # There's a catch in negative goals when we solve by the Graphplan method.
-        # 
-        # Here's an example: the "not garbage" predicate cannot be added to our
-        # state because its representation is NOT EXISTING in our state, the
-        # implementation forces us to REMOVE garbage from our "all predicates
-        # list" which would invariably make it the _not_ "all predicate list".
-        # Thats a very loose proof by contradition but the idea is what matters.
-        # I solved that by having negative goals be removed from the mutable
-        # set below as we do actions that remove the negative goals.
+        # Lets make the negative goals mutable because the algorithm is more energy-efficient if we remove some goals as we remove them
         negative_goals = set(negative_goals)
-        
-        # Let's attempt to add all possible results into this
-        # all_state_predicates until we solve the goals
 
-        while (steps_taken < 1000): # Bail if we tried over 999 combinations of actions
+        # Let's attempt to add all possible results into all_state_predicates until we solve the goals
+
+        while (steps_taken < 10000): # Bail if we tried over 9999 combinations of actions
             if (self.are_goals_satisfied(all_state_predicates, positive_goals, negative_goals)):
                 return steps_taken # Returns the level of the graph plan
             steps_taken += 1
@@ -60,7 +50,7 @@ class MaxHeuristic(Heuristic):
                     negative_goals.discard(predicate)
 
             # Replace our old set of state parts with the new
-            del all_state_predicates # That's optional because maybe this helps garbage collection.
+            del all_state_predicates # Optional, maybe this helps garbage collection.
             all_state_predicates = next_state_predicates
         return float("inf")
 
