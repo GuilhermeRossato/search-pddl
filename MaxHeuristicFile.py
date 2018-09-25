@@ -1,6 +1,5 @@
 from pddl.heuristic import Heuristic
 import pddl.state
-import pdb
 
 class MaxHeuristic(Heuristic):
     def are_goals_satisfied(self, initial_state, positive_goals, negative_goals):

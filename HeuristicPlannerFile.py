@@ -2,7 +2,6 @@ from pddl.pddl_planner import PDDL_Planner
 from pddl.heuristic import Heuristic
 from MaxHeuristicFile import MaxHeuristic
 import pddl.state
-import sys
 from heapq import heappush, heappop
 
 class Heuristic_Planner(PDDL_Planner):

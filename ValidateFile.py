@@ -1,7 +1,6 @@
 from pddl.pddl_parser import PDDL_Parser
 from pddl.action import Action
 from pddl.state import applicable, apply
-import pddl
 
 class Validator:
     def parse_plan(self, filename):
@@ -28,13 +27,13 @@ class Validator:
     
     # Obvious helper methods to make my code more verbose
     def are_goals_satisfied(self, initial_state, positive_goals, negative_goals):
-        return (pddl.state.applicable(initial_state, positive_goals, negative_goals))
+        return (applicable(initial_state, positive_goals, negative_goals))
 
     def can_apply_action_to_state(self, state, action):
-        return pddl.state.applicable(state, action.positive_preconditions, action.negative_preconditions)
+        return applicable(state, action.positive_preconditions, action.negative_preconditions)
 
     def get_state_with_applied_action(self, state, action):
-        return pddl.state.apply(state, action.add_effects, action.del_effects)
+        return apply(state, action.add_effects, action.del_effects)
 
     def fix_incomplete_plan(self, plan, actions):
         """
